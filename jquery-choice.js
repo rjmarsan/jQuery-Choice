@@ -4,9 +4,11 @@
 
     // Create some defaults, extending them with any options that were provided
     var settings = $.extend( {
-      'selected'   : function(element, selected, index) {},
-      'unselected' : function(element, selected, index) {},
-      'max': -1,
+      'selected'   : function(element, index, selected) {},
+      'unselected' : function(element, index, selected) {},
+      'max'        : 10000,
+      'allselected': function() {},
+      'cleared'    : function() {},
     }, options);
 
     var placeInList = function(list, item) {
@@ -26,29 +28,47 @@
       return index;
     };
 
+    var sizeOfList = function(list) {
+      var count = 0;
+      for (var x=0; x<list.length; x++) {
+	if (list[x] != 0) {
+	  count += 1;
+	}
+      }
+      return count;
+    }
+
+
     var selected = [];
     return this.each(function() {        
       console.log("Each"+this);
 	$(this).click(function() {
 	  if (selected.indexOf(this) >= 0) {
 
-	    console.log("Already selected - unselecting");
+	    //console.log("Already selected - unselecting");
 	    var index = removeFromList(selected,this);
-	    settings['unselected'](this, selected, index);
+	    settings['unselected'](this, index, selected);
+	    if (sizeOfList(selected) == 0) {
+	      settings['cleared']();
+	    }
 
 	  } else {
 
-	    console.log("Not selected yet! "+selected);
+	    //console.log("Not selected yet! "+selected);
 	    var index = placeInList(selected,this);
 	    if (index >= 0) {
-	      settings['selected'](this, selected,index);
+	      settings['selected'](this, index, selected);
+	      if (sizeOfList(selected) == settings['max'])
+		settings['allselected']();
 	    } else if (selected.length < settings['max']) {
 	      selected.push(this);
-	      settings['selected'](this, selected, selected.length-1);
+	      settings['selected'](this, selected.length-1, selected);
+	      if (sizeOfList(selected) == settings['max'])
+		settings['allselected']();
 	    }
 
 	  }
-	  console.log("List: "+selected);
+	  //console.log("List: "+selected);
 	});
     });
 
